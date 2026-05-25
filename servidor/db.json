@@ -1,16 +1,20 @@
 {
-  "task":[
+  "task": [
     {
-      "id":1,
-      "texto":"Tarefa 1"
+      "texto": "no es tarea",
+      "id": "1",
+      "completada": true
     },
     {
-      "id":2,
-      "texto":"Tarefa 2"
+      "id": "3",
+      "texto": "Tarefa 3",
+      "completada": true
     },
     {
-      "id":3,
-      "texto":"Tarefa 3"
+      "texto": "tarea 1",
+      "id": "1pYJc7KzQi0",
+      "completada": true
     }
-  ]
+  ],
+  "$schema": "./node_modules/json-server/schema.json"
 }
