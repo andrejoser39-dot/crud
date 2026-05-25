@@ -15,10 +15,10 @@ async function crearTarea(titulo, userId = 1) {
       },
     });
     const nuevaTarea = await respuesta.json();
-    console.log('✅ Tarea creada con éxito:', nuevaTarea);
+    console.log(' Tarea creada con éxito:', nuevaTarea);
     return nuevaTarea;
   } catch (error) {
-    console.error('❌ Error al crear la tarea:', error);
+    console.error(' Error al crear la tarea:', error);
   }
 }
 
@@ -32,7 +32,7 @@ async function listarTareas(limite = 5) {
     console.table(tareas.map(t => ({ ID: t.id, Título: t.title, Completada: t.completed })));
     return tareas;
   } catch (error) {
-    console.error('❌ Error al listar las tareas:', error);
+    console.error(' Error al listar las tareas:', error);
   }
 }
 
@@ -52,7 +52,7 @@ async function actualizarNombreTarea(id, nuevoTitulo) {
     console.log(`\n🔄 Tarea con ID ${id} actualizada con éxito:`, tareaActualizada);
     return tareaActualizada;
   } catch (error) {
-    console.error(`❌ Error al actualizar la tarea ${id}:`, error);
+    console.error(` Error al actualizar la tarea ${id}:`, error);
   }
 }
 
