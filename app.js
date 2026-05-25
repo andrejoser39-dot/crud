@@ -1,92 +1,119 @@
-const API_URL = 'https://jsonplaceholder.typicode.com/todos';
+document.addEventListener("DOMContentLoaded", () => {
+  // Listar las tareas al cargar la página (READ)
+  obtenerTareas();
 
-// 1. CREAR UNA TAREA (POST)
-async function crearTarea(titulo, userId = 1) {
-  try {
-    const respuesta = await fetch(API_URL, {
-      method: 'POST',
-      body: JSON.stringify({
-        title: titulo,
-        completed: false,
-        userId: userId
-      }),
-      headers: {
-        'Content-type': 'application/json; charset=UTF-8',
-      },
-    });
-    const nuevaTarea = await respuesta.json();
-    console.log(' Tarea creada con éxito:', nuevaTarea);
-    return nuevaTarea;
-  } catch (error) {
-    console.error(' Error al crear la tarea:', error);
-  }
+  // Capturar el evento submit del formulario (CREATE)
+  const formulario = document.getElementById("formularioTarea");
+  formulario.addEventListener("submit", crearTarea);
+});
+// --- FUNCIÓN READ (Adaptada a tu servidor local) ---
+function obtenerTareas() {
+  // Apuntamos a tu dirección local de la captura
+  fetch('http://localhost:3000/task')
+    .then(respuesta => respuesta.json())
+    .then(tareas => {
+      const listaUL = document.getElementById("listaTareas");
+      listaUL.innerHTML = "";
+
+      // Recorremos las tareas de tu servidor local
+      tareas.forEach(tarea => {
+        const li = document.createElement("li");
+
+        // CAMBIO CLAVE: Usamos .texto en lugar de .title porque así viene en tu JSON
+        const textoTarea = document.createElement("span");
+        textoTarea.textContent = tarea.texto;
+
+        const contenedorBotones = document.createElement("div");
+        contenedorBotones.className = "acciones-tarea";
+
+        const btnEditar = document.createElement("button");
+        btnEditar.textContent = "Editar";
+        btnEditar.addEventListener("click", () => {
+          // Pasamos tarea.texto aquí también
+          actualizarTarea(tarea.id, tarea.texto);
+        });
+
+        const btnEliminar = document.createElement("button");
+        btnEliminar.textContent = "Eliminar";
+        btnEliminar.addEventListener("click", () => {
+          eliminarTarea(tarea.id);
+        });
+
+        contenedorBotones.appendChild(btnEditar);
+        contenedorBotones.appendChild(btnEliminar);
+        li.appendChild(textoTarea);
+        li.appendChild(contenedorBotones);
+        listaUL.appendChild(li);
+      });
+    })
+    .catch(error => console.error("Error al obtener tareas desde localhost:", error));
 }
 
-// 2. LISTAR TAREAS (GET)
-// Limita el resultado a las primeras 'limite' tareas para no saturar la consola
-async function listarTareas(limite = 5) {
-  try {
-    const respuesta = await fetch(`${API_URL}?_limit=${limite}`);
-    const tareas = await respuesta.json();
-    console.log(`\n📋 Lista de las primeras ${limite} tareas:`);
-    console.table(tareas.map(t => ({ ID: t.id, Título: t.title, Completada: t.completed })));
-    return tareas;
-  } catch (error) {
-    console.error(' Error al listar las tareas:', error);
-  }
+// --- FUNCIÓN CREATE (Crear tarea) ---
+function crearTarea(evento) {
+  evento.preventDefault();
+  const input = document.getElementById("inputTarea");
+  const tituloTarea = input.value.trim();
+
+  if (tituloTarea === "") return;
+
+  const nuevaTarea = { title: tituloTarea, completed: false, userId: 1 };
+
+  fetch('https://jsonplaceholder.typicode.com/todos', {
+    method: 'POST',
+    body: JSON.stringify(nuevaTarea),
+    headers: { 'Content-type': 'application/json; charset=UTF-8' },
+  })
+    .then(respuesta => respuesta.json())
+    .then(datosServidor => {
+      console.log("Tarea creada en el servidor:", datosServidor);
+      input.value = "";
+      obtenerTareas();
+    })
+    .catch(error => console.error("Error al crear la tarea:", error));
 }
 
-// 3. ACTUALIZAR EL NOMBRE DE UNA TAREA (PATCH)
-async function actualizarNombreTarea(id, nuevoTitulo) {
-  try {
-    const respuesta = await fetch(`${API_URL}/${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify({
-        title: nuevoTitulo
-      }),
-      headers: {
-        'Content-type': 'application/json; charset=UTF-8',
-      },
-    });
-    const tareaActualizada = await respuesta.json();
-    console.log(`\n🔄 Tarea con ID ${id} actualizada con éxito:`, tareaActualizada);
-    return tareaActualizada;
-  } catch (error) {
-    console.error(` Error al actualizar la tarea ${id}:`, error);
-  }
+// --- FUNCIÓN UPDATE (Actualizar tarea) ---
+function actualizarTarea(id, tituloActual) {
+  // • Permitan cambiar el nombre de una tarea con un prompt
+  const nuevoTitulo = prompt("Modifica el nombre de la tarea:", tituloActual);
+
+  // Si el usuario cancela el prompt o lo deja vacío, no hacemos nada
+  if (nuevoTitulo === null || nuevoTitulo.trim() === "") return;
+
+  const tareaActualizada = {
+    id: id,
+    title: nuevoTitulo.trim(),
+    completed: false,
+    userId: 1
+  };
+
+  // • Envíen una petición PUT o PATCH
+  fetch(`https://jsonplaceholder.typicode.com/todos/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(tareaActualizada),
+    headers: { 'Content-type': 'application/json; charset=UTF-8' },
+  })
+    .then(respuesta => respuesta.json())
+    .then(datosActualizados => {
+      console.log(`Servidor responde a PUT (Tarea ${id} modificada):`, datosActualizados);
+
+      // • Refresquen la información mostrada
+      obtenerTareas();
+    })
+    .catch(error => console.error("Error al actualizar la tarea:", error));
 }
 
-// 4. ELIMINAR UNA TAREA (DELETE)
-async function eliminarTarea(id) {
-  try {
-    const respuesta = await fetch(`${API_URL}/${id}`, {
-      method: 'DELETE',
-    });
-    if (respuesta.ok) {
-      console.log(`\n Tarea con ID ${id} eliminada correctamente (Simulado).`);
-    }
-  } catch (error) {
-    console.error(` Error al eliminar la tarea ${id}:`, error);
-  }
+// --- FUNCIÓN DELETE (Eliminar tarea) ---
+function eliminarTarea(id) {
+  fetch(`https://jsonplaceholder.typicode.com/todos/${id}`, {
+    method: 'DELETE',
+  })
+    .then(respuesta => {
+      if (respuesta.ok) {
+        console.log(`Servidor responde a DELETE: Tarea con ID ${id} eliminada.`);
+        obtenerTareas();
+      }
+    })
+    .catch(error => console.error("Error al eliminar la tarea:", error));
 }
-
-// === EJECUCIÓN DE LAS PRUEBAS ===
-async function ejecutarGestor() {
-  console.log('--- INICIANDO PRUEBAS DEL GESTOR DE TAREAS ---');
-
-  // Paso 1: Listar tareas actuales
-  await listarTareas(5);
-
-  // Paso 2: Crear una nueva tarea
-  await crearTarea('Aprender a conectar APIs en el SENA');
-
-  // Paso 3: Actualizar el nombre de una tarea (por ejemplo, la tarea con ID 1)
-  await actualizarNombreTarea(1, 'Estudiar para el examen de desarrollo web');
-
-  // Paso 4: Eliminar una tarea (por ejemplo, la tarea con ID 2)
-  await eliminarTarea(2);
-
-  console.log('\n--- PRUEBAS FINALIZADAS ---');
-}
-
-ejecutarGestor();
